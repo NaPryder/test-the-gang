@@ -1,0 +1,34 @@
+version: '3.9'
+
+volumes:
+  postgres_data:
+  
+services:
+  db:
+    restart: always
+    image: "postgres:alpine"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  backend:
+    restart: always
+    build:
+      context: .
+      target: base-py
+    image: base-py:latest
+    depends_on:
+      - db
+    volumes:
+      - ./:/app/
+    environment:
+      - DEBUG=True
+      - USE_TEMP_DB=False
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    command: python ./manage.py runserver 0.0.0.0:8000
